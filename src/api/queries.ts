@@ -21,7 +21,7 @@ export const queryKeys = {
 export function useCustomer() {
   return useQuery<CustomerResponse, ApiError, CustomerResponse['customer']>({
     queryKey: queryKeys.customer,
-    queryFn: () => apiFetch('/api/customer'),
+    queryFn: ({ signal }) => apiFetch('/api/customer', { signal }),
     select: (data) => data.customer,
   })
 }
@@ -29,7 +29,7 @@ export function useCustomer() {
 export function useAccounts() {
   return useQuery<AccountsResponse, ApiError, AccountsResponse['accounts']>({
     queryKey: queryKeys.accounts,
-    queryFn: () => apiFetch('/api/accounts'),
+    queryFn: ({ signal }) => apiFetch('/api/accounts', { signal }),
     select: (data) => data.accounts,
   })
 }
@@ -41,8 +41,10 @@ export function useRecentTransactions() {
     TransactionsResponse['transactions']
   >({
     queryKey: [...queryKeys.transactions, { limit: RECENT_TRANSACTIONS_LIMIT }],
-    queryFn: () =>
-      apiFetch(`/api/transactions?limit=${RECENT_TRANSACTIONS_LIMIT}`),
+    queryFn: ({ signal }) =>
+      apiFetch(`/api/transactions?limit=${RECENT_TRANSACTIONS_LIMIT}`, {
+        signal,
+      }),
     select: (data) => data.transactions,
   })
 }
@@ -50,7 +52,7 @@ export function useRecentTransactions() {
 export function usePayees() {
   return useQuery<PayeesResponse, ApiError, PayeesResponse['payees']>({
     queryKey: queryKeys.payees,
-    queryFn: () => apiFetch('/api/payees'),
+    queryFn: ({ signal }) => apiFetch('/api/payees', { signal }),
     select: (data) => data.payees,
   })
 }
