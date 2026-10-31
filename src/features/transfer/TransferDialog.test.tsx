@@ -1,7 +1,8 @@
 import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { renderApp } from '../../test/renderApp'
+import { formatMoney } from '../../lib/format'
+import { money, renderApp } from '../../test/renderApp'
 import { server } from '../../test/setup'
 
 async function openTransfer() {
@@ -170,5 +171,174 @@ describe('recipient step', () => {
     expect(
       await within(dialog).findByRole('radio', { name: /Jamie Tan/ }),
     ).toBeInTheDocument()
+  })
+})
+
+async function openAmountStep() {
+  const app = await openTransfer()
+  await app.user.click(
+    await within(app.dialog).findByRole('radio', { name: /Jamie Tan/ }),
+  )
+  await app.user.click(
+    within(app.dialog).getByRole('button', { name: 'Continue' }),
+  )
+  const amount = within(app.dialog).getByRole('textbox', { name: 'Amount' })
+  return { ...app, amount }
+}
+
+describe('amount step', () => {
+  // Accessible descriptions keep formatMoney's non-breaking space, so these
+  // compare against formatMoney rather than money().
+  it('blocks an amount over the balance and sends nothing', async () => {
+    const requests: string[] = []
+    server.events.on('request:start', ({ request }) => {
+      if (request.method !== 'GET') requests.push(request.url)
+    })
+    const { user, dialog, amount } = await openAmountStep()
+
+    await user.type(amount, '5000')
+    await user.tab()
+    const message = `Amount can't be more than your available balance (${formatMoney(4280.55)}).`
+    expect(amount).toHaveAccessibleDescription(message)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Continue' }))
+
+    expect(amount).toHaveFocus()
+    expect(
+      within(dialog).getByRole('heading', { name: 'How much?' }),
+    ).toBeInTheDocument()
+    expect(requests).toEqual([])
+  })
+
+  it('checks the daily limit against a larger account', async () => {
+    const { user, dialog, amount } = await openAmountStep()
+
+    await user.selectOptions(
+      within(dialog).getByRole('combobox', { name: 'From account' }),
+      within(dialog).getByRole('option', { name: /Savings/ }),
+    )
+    expect(within(dialog).getByText(money(12840))).toBeInTheDocument()
+
+    await user.type(amount, '6000')
+    await user.tab()
+
+    expect(amount).toHaveAccessibleDescription(
+      `This transfer exceeds your remaining daily limit (${formatMoney(5000)}).`,
+    )
+  })
+
+  it('offers only deposit accounts', async () => {
+    const { dialog } = await openAmountStep()
+
+    const options = within(
+      within(dialog).getByRole('combobox', { name: 'From account' }),
+    ).getAllByRole('option')
+    expect(options.map((o) => o.textContent)).toEqual([
+      'Everyday Checking · •••• 4821',
+      'Savings Plus · •••• 9930',
+    ])
+  })
+
+  it('rejects amounts below 1.00 or with more than 2 decimals', async () => {
+    const { user, amount } = await openAmountStep()
+
+    await user.type(amount, '0.5')
+    await user.tab()
+    expect(amount).toHaveAccessibleDescription(
+      `Enter at least ${formatMoney(1)}.`,
+    )
+
+    await user.clear(amount)
+    await user.type(amount, '12.345')
+    expect(amount).toHaveAccessibleDescription(
+      'Use numbers only, up to 2 decimal places.',
+    )
+  })
+
+  it('fills the amount from a quick amount', async () => {
+    const { user, dialog, amount } = await openAmountStep()
+
+    await user.click(within(dialog).getByRole('button', { name: '250' }))
+
+    expect(amount).toHaveValue('250')
+  })
+
+  it('counts note characters and flags notes over 50', async () => {
+    const { user, dialog } = await openAmountStep()
+    const note = within(dialog).getByRole('textbox', {
+      name: 'Note (optional)',
+    })
+
+    await user.type(note, 'Dinner')
+    expect(within(dialog).getByText('6/50')).toBeInTheDocument()
+
+    await user.type(note, 'x'.repeat(45))
+    await user.tab()
+    expect(within(dialog).getByText('51/50')).toBeInTheDocument()
+    expect(note).toHaveAccessibleDescription(
+      'Keep the note to 50 characters or fewer.',
+    )
+  })
+})
+
+describe('review step', () => {
+  it('shows the details and Back keeps them', async () => {
+    const { user, dialog, amount } = await openAmountStep()
+    await user.type(amount, '120')
+    await user.type(
+      within(dialog).getByRole('textbox', { name: 'Note (optional)' }),
+      'Dinner',
+    )
+    await user.click(within(dialog).getByRole('button', { name: 'Continue' }))
+
+    expect(
+      within(dialog).getByRole('heading', { name: 'Check the details' }),
+    ).toHaveFocus()
+    expect(dialog).toHaveTextContent('Everyday Checking · •••• 4821')
+    expect(dialog).toHaveTextContent('Jamie Tan · DBS · •••• 3391')
+    expect(dialog).toHaveTextContent(`Amount${money(120)}`)
+    expect(dialog).toHaveTextContent(`Fee${money(0)}`)
+    expect(dialog).toHaveTextContent('NoteDinner')
+    expect(dialog).toHaveTextContent(`Total${money(120)}`)
+    expect(
+      within(dialog).getByRole('button', { name: 'Confirm transfer' }),
+    ).toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Back' }))
+
+    expect(within(dialog).getByRole('textbox', { name: 'Amount' })).toHaveValue(
+      '120',
+    )
+    expect(
+      within(dialog).getByRole('textbox', { name: 'Note (optional)' }),
+    ).toHaveValue('Dinner')
+  })
+
+  it('masks a new recipient’s account number', async () => {
+    const { user, dialog } = await openTransfer()
+    await user.click(
+      within(dialog).getByRole('radio', { name: 'Send to someone new' }),
+    )
+    await user.type(
+      within(dialog).getByRole('textbox', { name: 'Recipient name' }),
+      'Alex Lim',
+    )
+    await user.type(
+      within(dialog).getByRole('textbox', { name: 'Account number' }),
+      '12345678',
+    )
+    await user.selectOptions(
+      within(dialog).getByRole('combobox', { name: 'Bank' }),
+      'OCBC',
+    )
+    await user.click(within(dialog).getByRole('button', { name: 'Continue' }))
+    await user.type(
+      within(dialog).getByRole('textbox', { name: 'Amount' }),
+      '50',
+    )
+    await user.click(within(dialog).getByRole('button', { name: 'Continue' }))
+
+    expect(dialog).toHaveTextContent('Alex Lim · OCBC · •••• 5678')
+    expect(dialog).not.toHaveTextContent('Note')
   })
 })
