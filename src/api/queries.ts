@@ -3,6 +3,7 @@ import { apiFetch, type ApiError } from './client'
 import type {
   AccountsResponse,
   CustomerResponse,
+  PayeesResponse,
   TransactionsResponse,
 } from './types'
 
@@ -14,6 +15,7 @@ export const queryKeys = {
   customer: ['customer'],
   accounts: ['accounts'],
   transactions: ['transactions'],
+  payees: ['payees'],
 } as const
 
 export function useCustomer() {
@@ -44,5 +46,13 @@ export function useRecentTransactions() {
         signal,
       }),
     select: (data) => data.transactions,
+  })
+}
+
+export function usePayees() {
+  return useQuery<PayeesResponse, ApiError, PayeesResponse['payees']>({
+    queryKey: queryKeys.payees,
+    queryFn: ({ signal }) => apiFetch('/api/payees', { signal }),
+    select: (data) => data.payees,
   })
 }
