@@ -9,3 +9,5 @@ coverage/
 
 # Local planning notes (not part of the submission)
 claude/
+test-results/
+playwright-report/
