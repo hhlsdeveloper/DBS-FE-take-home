@@ -114,6 +114,11 @@
     box-shadow: none;
   }
 
+  /* The default ring is the brand colour, which disappears on the gradient. */
+  .newTransfer:focus-visible {
+    outline-color: var(--on-hero);
+  }
+
   .grid {
     grid-template-columns: minmax(0, 1fr) 300px;
     grid-template-rows: auto auto 1fr;

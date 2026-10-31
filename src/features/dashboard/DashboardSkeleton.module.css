@@ -1,11 +1,39 @@
+/* Heights measured from the loaded dashboard at each breakpoint. */
+
+.hero {
+  height: 9rem;
+}
+
+.limit {
+  height: 8.75rem;
+}
+
 .cards {
   display: grid;
   gap: var(--space-3);
   margin-top: var(--space-3);
 }
 
+.card {
+  height: 7.5rem;
+}
+
 @media (min-width: 640px) {
+  .hero {
+    height: 10.75rem;
+  }
+
   .cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .card {
+    height: 8.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .limit {
+    height: 10.375rem;
   }
 }
