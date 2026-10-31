@@ -145,6 +145,20 @@ describe('recipient step', () => {
     ).toBeInTheDocument()
   })
 
+  it('says when there are no saved payees', async () => {
+    server.use(
+      http.get('*/api/payees', () => HttpResponse.json({ payees: [] })),
+    )
+    const { dialog } = await openTransfer()
+
+    expect(
+      await within(dialog).findByText('You have no saved payees yet.'),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('radio', { name: 'Send to someone new' }),
+    ).toBeInTheDocument()
+  })
+
   it('still offers someone new when payees fail to load', async () => {
     server.use(
       http.get(
