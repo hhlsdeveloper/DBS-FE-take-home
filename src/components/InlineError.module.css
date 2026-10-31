@@ -1,4 +1,5 @@
 .error {
+  min-height: calc(var(--text-sm) * var(--leading-normal));
   color: var(--negative);
   font-size: var(--text-sm);
 }

@@ -6,7 +6,6 @@ interface FieldProps {
   id: string
   label: string
   error?: string
-  hideLabel?: boolean
 }
 
 // Shared by both fields: the error is linked to the control (T8).
@@ -17,12 +16,9 @@ function errorProps(id: string, error?: string) {
   }
 }
 
-function Label({ id, label, hideLabel }: FieldProps) {
+function Label({ id, label }: FieldProps) {
   return (
-    <label
-      htmlFor={id}
-      className={hideLabel ? 'visually-hidden' : styles.label}
-    >
+    <label htmlFor={id} className={styles.label}>
       {label}
     </label>
   )
@@ -32,12 +28,11 @@ export function TextField({
   id,
   label,
   error,
-  hideLabel,
   ...props
 }: FieldProps & ComponentProps<'input'>) {
   return (
     <div className={styles.field}>
-      <Label id={id} label={label} hideLabel={hideLabel} />
+      <Label id={id} label={label} />
       <input
         id={id}
         className={styles.control}
@@ -53,12 +48,11 @@ export function SelectField({
   id,
   label,
   error,
-  hideLabel,
   ...props
 }: FieldProps & ComponentProps<'select'>) {
   return (
     <div className={styles.field}>
-      <Label id={id} label={label} hideLabel={hideLabel} />
+      <Label id={id} label={label} />
       <div className={styles.selectWrap}>
         <select
           id={id}

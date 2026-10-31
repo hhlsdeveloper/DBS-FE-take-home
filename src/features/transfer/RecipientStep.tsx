@@ -87,17 +87,18 @@ export function RecipientStep({ labelledBy }: { labelledBy: string }) {
 
   return (
     <>
-      <div className={styles.search}>
-        <TextField
-          id="payee-search"
-          label="Search payees"
-          hideLabel
-          type="search"
-          placeholder="Search payees"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
+      {/* Not a form field, so no error line under it. */}
+      <label htmlFor="payee-search" className="visually-hidden">
+        Search payees
+      </label>
+      <input
+        id="payee-search"
+        type="search"
+        placeholder="Search payees"
+        className={styles.search}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
 
       {/* Native radios: Tab reaches the group, arrow keys move within it. */}
       <div
