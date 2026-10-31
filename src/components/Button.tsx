@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react'
 import styles from './Button.module.css'
 
-type Variant = 'primary' | 'secondary' | 'ghost'
+type Variant = 'primary' | 'secondary'
 
 interface ButtonProps extends ComponentProps<'button'> {
   variant?: Variant

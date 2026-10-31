@@ -42,11 +42,3 @@
   background: var(--surface-muted);
 }
 
-.ghost {
-  background: transparent;
-  color: var(--brand);
-}
-
-.ghost:hover:not(:disabled) {
-  background: var(--brand-soft);
-}
