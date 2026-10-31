@@ -38,7 +38,11 @@ export function Dashboard() {
   // Focus returns here when the transfer dialog closes.
   const newTransferButtonRef = useRef<HTMLButtonElement>(null)
 
-  const failed = [customer, accounts, transactions].filter((q) => q.isError)
+  // Only a failed *first* load is an error. If a background refresh fails we
+  // keep showing the data we already have (isError would also be true then).
+  const failed = [customer, accounts, transactions].filter(
+    (q) => q.isLoadingError,
+  )
 
   let content
   if (failed.length > 0) {

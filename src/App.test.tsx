@@ -1,4 +1,5 @@
-import { screen, within } from '@testing-library/react'
+import { focusManager } from '@tanstack/react-query'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { money, renderApp } from './test/renderApp'
@@ -42,6 +43,47 @@ describe('dashboard', () => {
     expect(
       await screen.findByRole('heading', { name: 'Good evening, Ava' }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText("We couldn't load your dashboard."),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('header', () => {
+  it('marks Overview as the current page without a reloading link', () => {
+    renderApp()
+
+    // A real link would reload the page and reset the in-memory mock data.
+    // `hidden: true` because the nav is display:none at jsdom's (mobile) width.
+    expect(
+      screen.queryByRole('link', { name: 'Overview', hidden: true }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('Overview')).toHaveAttribute('aria-current', 'page')
+  })
+})
+
+describe('background refresh', () => {
+  it('keeps showing loaded data when a refresh fails', async () => {
+    renderApp()
+    expect(await screen.findByText(money(17120.55))).toBeInTheDocument()
+
+    let refetched = false
+    server.use(
+      http.get('*/api/accounts', () => {
+        refetched = true
+        return serverError()
+      }),
+    )
+    // Returning to the tab refetches stale queries.
+    act(() => {
+      focusManager.setFocused(false)
+      focusManager.setFocused(true)
+    })
+    await waitFor(() => expect(refetched).toBe(true))
+
+    // Give the failed response time to land, then check nothing was lost.
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    expect(screen.getByText(money(17120.55))).toBeInTheDocument()
     expect(
       screen.queryByText("We couldn't load your dashboard."),
     ).not.toBeInTheDocument()
@@ -183,8 +225,9 @@ describe('theme and segment', () => {
 
   it('switches to premium', async () => {
     const { user } = renderApp()
-    // jsdom applies the CSS at a narrow width, so the visible switch is the
-    // mobile one under the greeting, which appears once data has loaded.
+    // jsdom ignores media queries, so the mobile base styles apply: the
+    // header switch is display:none and the visible one is under the
+    // greeting, which only renders once data has loaded.
     const [segmentSwitch] = await screen.findAllByRole('group', {
       name: 'Customer segment',
     })
