@@ -36,11 +36,11 @@ export function Dashboard() {
     customer.data?.segment ?? 'retail',
   )
 
-  const [isTransferOpen, setIsTransferOpen] = useState(false)
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
   const newTransferButtonRef = useRef<HTMLButtonElement>(null)
 
-  function closeTransfer() {
-    setIsTransferOpen(false)
+  function closeTransferDialog() {
+    setIsTransferDialogOpen(false)
     newTransferButtonRef.current?.focus()
   }
 
@@ -82,7 +82,7 @@ export function Dashboard() {
                     <Button
                       ref={newTransferButtonRef}
                       className={styles.newTransfer}
-                      onClick={() => setIsTransferOpen(true)}
+                      onClick={() => setIsTransferDialogOpen(true)}
                     >
                       <PlusIcon />
                       New transfer
@@ -117,7 +117,7 @@ export function Dashboard() {
           <DashboardSkeleton />
         )}
       </main>
-      {isTransferOpen && <TransferDialog onClose={closeTransfer} />}
+      {isTransferDialogOpen && <TransferDialog onClose={closeTransferDialog} />}
     </>
   )
 }
