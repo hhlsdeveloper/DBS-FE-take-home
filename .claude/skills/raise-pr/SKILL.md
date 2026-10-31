@@ -14,11 +14,14 @@ is pushed or created. Never merge.
 
 - `gh auth status` succeeds.
 - Base branch = `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`
-  (usually `main`). Current branch is **not** the base branch.
+  (usually `main`). Record the current branch as `<branch>`
+  (`git branch --show-current`); it must **not** be the base branch. Use this
+  recorded name, never `HEAD`, in every later step: an editor can switch the
+  checkout while the PR text is being reviewed.
 - `git status --porcelain` is empty (no uncommitted work).
 - `git fetch origin <base>` then `git log --oneline origin/<base>..HEAD` lists
   at least one commit.
-- `gh pr view --json url,state` finds no open PR for this branch. If one
+- `gh pr list --head <branch> --state open --json url` is empty. If a PR
   exists, show its URL and ask whether to update its body instead.
 
 ## 2. Verify
@@ -66,10 +69,14 @@ asks for and show the result again. Continue only on an explicit yes.
 
 ## 5. Create
 
-1. `git push -u origin HEAD`
-2. Write the body to a temp file, then
-   `gh pr create --base <base> --title "<title>" --body-file <file>`
-3. Reply with the PR URL and remind the user that CI runs on the PR and that
+1. Confirm `git branch --show-current` still equals `<branch>`. If not, stop
+   and tell the user the checkout changed.
+2. `git push -u origin <branch>`
+3. Write the body to a temp file, then
+   `gh pr create --base <base> --head <branch> --title "<title>" --body-file <file>`
+4. Check `gh pr view <url> --json headRefName,commits` shows `<branch>` and
+   the commits from step 3.
+5. Reply with the PR URL and remind the user that CI runs on the PR and that
    merging is theirs.
 
 ## Common mistakes
@@ -78,5 +85,6 @@ asks for and show the result again. Continue only on an explicit yes.
 | --- | --- |
 | Creating the PR, then showing the text | Show and get a yes first (step 4) |
 | Passing the body with `--body "..."` | `--body-file` keeps backticks and newlines intact |
+| `git push origin HEAD` / `gh pr create` without `--head` | Use the recorded `<branch>`; the checkout may have changed |
 | Listing every file in **Changes** | Group by what changed for the reviewer |
 | Adding reviewers, labels or merging | Only if the user asks |
