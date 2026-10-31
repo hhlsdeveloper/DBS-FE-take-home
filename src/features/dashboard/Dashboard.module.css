@@ -103,9 +103,14 @@
     display: none;
   }
 
-  /* Desktop: back inside the balance hero. */
-  .newTransfer {
+  /* Desktop: back inside the balance hero, inverted so it stands out on the
+     brand gradient. */
+  .newTransfer,
+  .newTransfer:hover:not(:disabled),
+  .newTransfer:active:not(:disabled) {
     position: static;
+    background: var(--on-hero);
+    color: var(--hero-from);
     box-shadow: none;
   }
 
