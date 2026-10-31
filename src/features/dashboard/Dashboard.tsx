@@ -117,7 +117,13 @@ export function Dashboard() {
           <DashboardSkeleton />
         )}
       </main>
-      {isTransferDialogOpen && <TransferDialog onClose={closeTransferDialog} />}
+      {isTransferDialogOpen && customer.data && accounts.data && (
+        <TransferDialog
+          accounts={accounts.data}
+          customer={customer.data}
+          onClose={closeTransferDialog}
+        />
+      )}
     </>
   )
 }

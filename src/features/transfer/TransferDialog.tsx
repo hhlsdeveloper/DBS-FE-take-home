@@ -1,14 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, type FieldPath } from 'react-hook-form'
+import type { Account, Customer } from '../../api/types'
 import { Button } from '../../components/Button'
 import { CloseIcon } from '../../components/icons'
+import { getRemainingLimit } from '../../lib/accounts'
+import { AmountStep } from './AmountStep'
 import { RecipientStep } from './RecipientStep'
+import { ReviewStep } from './ReviewStep'
 import { Stepper, type TransferStep } from './Stepper'
 import styles from './TransferDialog.module.css'
 import {
+  createTransferSchema,
   emptyTransfer,
-  transferSchema,
   type TransferFormValues,
 } from './transferSchema'
 
@@ -18,7 +22,27 @@ const STEP_TITLES: Record<TransferStep, string> = {
   review: 'Check the details',
 }
 
+// The fields each step checks before Continue moves on.
+const STEP_FIELDS: Partial<
+  Record<TransferStep, FieldPath<TransferFormValues>[]>
+> = {
+  recipient: ['payeeId', 'newRecipient'],
+  amount: ['fromAccountId', 'amount', 'note'],
+}
+
+const NEXT_STEP: Partial<Record<TransferStep, TransferStep>> = {
+  recipient: 'amount',
+  amount: 'review',
+}
+
+const PREVIOUS_STEP: Partial<Record<TransferStep, TransferStep>> = {
+  amount: 'recipient',
+  review: 'amount',
+}
+
 interface TransferDialogProps {
+  accounts: Account[]
+  customer: Customer
   /** Called once the dialog has closed (✕, Cancel or Esc). */
   onClose: () => void
 }
@@ -27,16 +51,22 @@ interface TransferDialogProps {
  * Mounted only while open, so closing throws away what was entered and the
  * next transfer starts empty.
  */
-export function TransferDialog({ onClose }: TransferDialogProps) {
+export function TransferDialog({
+  accounts,
+  customer,
+  onClose,
+}: TransferDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const stepTitleRef = useRef<HTMLHeadingElement>(null)
   const [step, setStep] = useState<TransferStep>('recipient')
 
+  const remainingLimit = getRemainingLimit(customer)
   const form = useForm<TransferFormValues>({
-    resolver: zodResolver(transferSchema),
+    // Rebuilt each render, so a refreshed balance or limit applies at once.
+    resolver: zodResolver(createTransferSchema({ accounts, remainingLimit })),
     // Check a field when the user leaves it, then as they fix it.
     mode: 'onTouched',
-    defaultValues: emptyTransfer,
+    defaultValues: emptyTransfer(accounts),
   })
 
   useEffect(() => {
@@ -54,11 +84,13 @@ export function TransferDialog({ onClose }: TransferDialogProps) {
   const close = () => dialogRef.current?.close()
 
   async function handleContinue() {
-    const valid = await form.trigger(['payeeId', 'newRecipient'], {
-      shouldFocus: true,
-    })
-    if (valid) setStep('amount')
+    const next = NEXT_STEP[step]
+    if (!next) return
+    const valid = await form.trigger(STEP_FIELDS[step], { shouldFocus: true })
+    if (valid) setStep(next)
   }
+
+  const previous = PREVIOUS_STEP[step]
 
   return (
     <dialog
@@ -105,20 +137,27 @@ export function TransferDialog({ onClose }: TransferDialogProps) {
             {step === 'recipient' && (
               <RecipientStep labelledBy="transfer-step-title" />
             )}
+            {step === 'amount' && (
+              <AmountStep accounts={accounts} remainingLimit={remainingLimit} />
+            )}
+            {step === 'review' && <ReviewStep accounts={accounts} />}
           </div>
 
           <footer className={styles.footer}>
-            {step === 'recipient' ? (
-              <>
-                <Button variant="secondary" onClick={close}>
-                  Cancel
-                </Button>
-                <Button type="submit">Continue</Button>
-              </>
-            ) : (
-              <Button variant="secondary" onClick={() => setStep('recipient')}>
+            {previous ? (
+              <Button variant="secondary" onClick={() => setStep(previous)}>
                 Back
               </Button>
+            ) : (
+              <Button variant="secondary" onClick={close}>
+                Cancel
+              </Button>
+            )}
+            {step === 'review' ? (
+              // Sending is added with POST /api/transfers.
+              <Button>Confirm transfer</Button>
+            ) : (
+              <Button type="submit">Continue</Button>
             )}
           </footer>
         </form>
