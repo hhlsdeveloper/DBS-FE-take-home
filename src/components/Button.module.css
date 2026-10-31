@@ -41,4 +41,3 @@
 .secondary:hover:not(:disabled) {
   background: var(--surface-muted);
 }
-
