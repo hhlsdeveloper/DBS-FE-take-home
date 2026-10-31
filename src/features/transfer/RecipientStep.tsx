@@ -146,7 +146,9 @@ export function RecipientStep({ labelledBy }: { labelledBy: string }) {
             error={errors.newRecipient?.bank?.message}
             {...register('newRecipient.bank')}
           >
-            <option value="">Choose a bank</option>
+            <option value="" disabled hidden>
+              Choose a bank
+            </option>
             {BANKS.map((bank) => (
               <option key={bank} value={bank}>
                 {bank}
