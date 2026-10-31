@@ -59,12 +59,14 @@ export function SelectField({
   return (
     <div className={styles.field}>
       <Label id={id} label={label} hideLabel={hideLabel} />
-      <select
-        id={id}
-        className={styles.control}
-        {...errorProps(id, error)}
-        {...props}
-      />
+      <div className={styles.selectWrap}>
+        <select
+          id={id}
+          className={`${styles.control} ${styles.select}`}
+          {...errorProps(id, error)}
+          {...props}
+        />
+      </div>
       <InlineError id={`${id}-error`} message={error} />
     </div>
   )

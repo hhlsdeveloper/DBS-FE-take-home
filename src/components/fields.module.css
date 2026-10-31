@@ -18,6 +18,29 @@
   background: var(--surface);
 }
 
+/* The native arrow can't be spaced or coloured, so draw our own. */
+.selectWrap {
+  position: relative;
+}
+
+.select {
+  appearance: none;
+  padding-right: var(--space-10);
+}
+
+.selectWrap::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: translateY(-75%) rotate(45deg);
+  pointer-events: none;
+}
+
 .control[aria-invalid='true'] {
   border-color: var(--negative);
 }
