@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import {
   useAccounts,
   useCustomer,
@@ -35,9 +34,6 @@ export function Dashboard() {
     customer.data?.segment ?? 'retail',
   )
 
-  // Focus returns here when the transfer dialog closes.
-  const newTransferButtonRef = useRef<HTMLButtonElement>(null)
-
   // Only a failed *first* load is an error. If a background refresh fails we
   // keep showing the data we already have (isError would also be true then).
   const failed = [customer, accounts, transactions].filter(
@@ -73,10 +69,7 @@ export function Dashboard() {
                 <BalanceHero
                   accounts={accounts.data}
                   action={
-                    <Button
-                      ref={newTransferButtonRef}
-                      className={styles.newTransfer}
-                    >
+                    <Button className={styles.newTransfer}>
                       <PlusIcon />
                       New transfer
                     </Button>

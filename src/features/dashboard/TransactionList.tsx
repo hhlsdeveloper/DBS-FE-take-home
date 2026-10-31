@@ -10,7 +10,7 @@ import styles from './TransactionList.module.css'
  * Filters the loaded rows in the browser: instant, no request per keystroke.
  * Trade-off: it only searches the 8 rows on screen, not older history.
  */
-export function filterTransactions(
+function filterTransactions(
   transactions: Transaction[],
   query: string,
 ): Transaction[] {

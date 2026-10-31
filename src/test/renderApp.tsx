@@ -3,7 +3,6 @@ import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
 import { formatMoney } from '../lib/format'
-import { server } from './setup'
 
 /**
  * `formatMoney` for text queries. Testing Library turns the non-breaking
@@ -28,21 +27,4 @@ export function renderApp() {
   )
 
   return { ...result, user }
-}
-
-/**
- * Counts requests that reach the mock API, e.g.
- * `const posts = countRequests('POST', '/api/transfers')` then `posts()`.
- */
-export function countRequests(method: string, pathSuffix: string) {
-  let count = 0
-  server.events.on('request:start', ({ request }) => {
-    if (
-      request.method === method &&
-      new URL(request.url).pathname.endsWith(pathSuffix)
-    ) {
-      count += 1
-    }
-  })
-  return () => count
 }

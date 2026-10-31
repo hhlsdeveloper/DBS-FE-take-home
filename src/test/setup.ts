@@ -9,18 +9,6 @@ export const server = setupServer(...handlers)
 // Every mock response takes ~500ms, so give findBy*/waitFor more room.
 configure({ asyncUtilTimeout: 3000 })
 
-// jsdom has no showModal()/close() on <dialog>. Minimal stand-ins so the
-// transfer dialog can open and close in tests.
-if (!HTMLDialogElement.prototype.showModal) {
-  HTMLDialogElement.prototype.showModal = function showModal() {
-    this.setAttribute('open', '')
-  }
-  HTMLDialogElement.prototype.close = function close() {
-    this.removeAttribute('open')
-    this.dispatchEvent(new Event('close'))
-  }
-}
-
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 beforeEach(() => resetMockDb())
 afterEach(() => {

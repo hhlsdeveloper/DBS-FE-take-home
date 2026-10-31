@@ -5,7 +5,7 @@ import type { Account, Customer } from '../api/types'
 const roundCents = (n: number) => Math.round(n * 100) / 100
 
 /** Checking and savings hold money you can spend; the credit card doesn't. */
-export function isDepositAccount(account: Account): boolean {
+function isDepositAccount(account: Account): boolean {
   return account.type !== 'credit'
 }
 
