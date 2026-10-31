@@ -20,6 +20,7 @@ import styles from './Dashboard.module.css'
 import { DashboardError } from './DashboardError'
 import { DashboardSkeleton } from './DashboardSkeleton'
 import { Header } from './Header'
+import { TransactionList } from './TransactionList'
 
 export function Dashboard() {
   // Siblings, so all three requests start at the same time (D1).
@@ -88,6 +89,9 @@ export function Dashboard() {
               ))}
             </ul>
           </section>
+          <div className={styles.transactions}>
+            <TransactionList transactions={transactions.data} />
+          </div>
         </div>
       </>
     )

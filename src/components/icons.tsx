@@ -33,6 +33,19 @@ export const SunIcon = () => (
   </Icon>
 )
 
+export const SearchIcon = () => (
+  <Icon>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </Icon>
+)
+
+export const CloseIcon = () => (
+  <Icon>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </Icon>
+)
+
 export const PlusIcon = () => (
   <Icon>
     <path d="M12 5v14M5 12h14" />

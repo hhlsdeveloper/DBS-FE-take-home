@@ -88,6 +88,83 @@ describe('balances', () => {
   })
 })
 
+describe('recent transactions', () => {
+  const rows = () =>
+    within(screen.getByRole('list', { name: 'Recent transactions' })).getAllByRole(
+      'listitem',
+    )
+
+  it('lists the 8 newest transactions newest first', async () => {
+    renderApp()
+    await screen.findByRole('list', { name: 'Recent transactions' })
+
+    const items = rows()
+    expect(items).toHaveLength(8)
+    expect(items[0]).toHaveTextContent('FairPrice Finest')
+    expect(items[0]).toHaveTextContent('Groceries · 19 Oct')
+    expect(within(items[0]).getByText(money(-86.4))).toBeInTheDocument()
+
+    const grab = items.find((row) => row.textContent?.includes('Grab'))
+    expect(grab).toHaveTextContent('Pending')
+
+    const payNow = items.find((row) =>
+      row.textContent?.includes('PayNow from Marcus Lee'),
+    )
+    expect(within(payNow!).getByText(`+${money(45)}`)).toBeInTheDocument()
+  })
+
+  it('filters by category ignoring case and spaces', async () => {
+    const { user } = renderApp()
+    const search = await screen.findByRole('searchbox', {
+      name: 'Search transactions',
+    })
+
+    await user.type(search, '  GRAB ')
+    expect(rows()).toHaveLength(1)
+    expect(rows()[0]).toHaveTextContent('Grab')
+    expect(screen.getByText('1 result')).toBeInTheDocument()
+
+    await user.clear(search)
+    await user.type(search, 'groceries')
+    expect(rows()).toHaveLength(1)
+    expect(rows()[0]).toHaveTextContent('FairPrice Finest')
+  })
+
+  it('shows the no-results state and clears it', async () => {
+    const { user } = renderApp()
+    const search = await screen.findByRole('searchbox', {
+      name: 'Search transactions',
+    })
+
+    await user.type(search, 'zzz')
+    expect(
+      screen.getByText('No transactions match your search.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('list', { name: 'Recent transactions' }),
+    ).not.toBeInTheDocument()
+
+    // The text button in the empty state (the ✕ in the field shares its name).
+    const [, clearButton] = screen.getAllByRole('button', { name: 'Clear search' })
+    await user.click(clearButton)
+
+    expect(rows()).toHaveLength(8)
+    expect(search).toHaveValue('')
+    expect(search).toHaveFocus()
+  })
+
+  it('shows an empty state when there are no transactions', async () => {
+    server.use(
+      http.get('*/api/transactions', () =>
+        HttpResponse.json({ transactions: [], total: 0 }),
+      ),
+    )
+    renderApp()
+
+    expect(await screen.findByText('No transactions yet.')).toBeInTheDocument()
+  })
+})
+
 describe('theme and segment', () => {
   beforeEach(() => {
     localStorage.clear()
