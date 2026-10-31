@@ -31,9 +31,11 @@ export function Header({
         </div>
 
         <nav aria-label="Main" className={styles.nav}>
-          <a href="/" aria-current="page" className={styles.navItem}>
+          {/* Not a link: we're already here, and reloading would reset the
+              in-memory mock data. */}
+          <span aria-current="page" className={styles.navItem}>
             Overview
-          </a>
+          </span>
           {DISABLED_NAV.map((item) => (
             <span key={item} aria-disabled="true" className={styles.navItem}>
               {item}
