@@ -6,3 +6,6 @@ coverage/
 *.log
 .env
 .env.*
+
+# Local planning notes (not part of the submission)
+claude/
