@@ -1,18 +1,23 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, type FieldPath } from 'react-hook-form'
+import type { ApiError } from '../../api/client'
+import { useCreateTransfer } from '../../api/mutations'
 import type { Account, Customer } from '../../api/types'
 import { Button } from '../../components/Button'
 import { CloseIcon } from '../../components/icons'
 import { getRemainingLimit } from '../../lib/accounts'
+import { formatMoney } from '../../lib/format'
 import { AmountStep } from './AmountStep'
 import { RecipientStep } from './RecipientStep'
 import { ReviewStep } from './ReviewStep'
 import { Stepper, type TransferStep } from './Stepper'
+import { SuccessPanel } from './SuccessPanel'
 import styles from './TransferDialog.module.css'
 import {
   createTransferSchema,
   emptyTransfer,
+  toTransferRequest,
   type TransferFormValues,
 } from './transferSchema'
 
@@ -40,6 +45,15 @@ const PREVIOUS_STEP: Partial<Record<TransferStep, TransferStep>> = {
   review: 'amount',
 }
 
+const SEND_ERROR =
+  "Something went wrong. Your money hasn't left your account. Try again."
+
+// If the API rejected a specific field (e.g. the balance changed since the
+// form checked it), its message says more than the generic one.
+function sendErrorMessage(error: ApiError): string {
+  return Object.values(error.fields ?? {})[0] ?? SEND_ERROR
+}
+
 interface TransferDialogProps {
   accounts: Account[]
   customer: Customer
@@ -59,6 +73,9 @@ export function TransferDialog({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const stepTitleRef = useRef<HTMLHeadingElement>(null)
   const [step, setStep] = useState<TransferStep>('recipient')
+  const transfer = useCreateTransfer()
+  // Blocks a second send before the re-render that disables the button.
+  const sendingRef = useRef(false)
 
   const remainingLimit = getRemainingLimit(customer)
   const form = useForm<TransferFormValues>({
@@ -90,7 +107,25 @@ export function TransferDialog({
     if (valid) setStep(next)
   }
 
+  function send() {
+    if (sendingRef.current) return
+    sendingRef.current = true
+    transfer.mutate(toTransferRequest(form.getValues()), {
+      onSettled: () => {
+        sendingRef.current = false
+      },
+    })
+  }
+
+  function goBack(previous: TransferStep) {
+    // A send error belongs to the review step; going back to fix it clears it.
+    transfer.reset()
+    setStep(previous)
+  }
+
   const previous = PREVIOUS_STEP[step]
+  const sent = transfer.data?.transfer
+  const isSending = transfer.isPending
 
   return (
     <dialog
@@ -98,6 +133,8 @@ export function TransferDialog({
       aria-labelledby="transfer-title"
       className={styles.dialog}
       onClose={onClose}
+      // The money is already on its way; stay open to show how it went.
+      onCancel={(e) => isSending && e.preventDefault()}
     >
       <FormProvider {...form}>
         <form
@@ -117,47 +154,80 @@ export function TransferDialog({
                 type="button"
                 aria-label="Close"
                 className={styles.close}
+                disabled={isSending}
                 onClick={close}
               >
                 <CloseIcon />
               </button>
             </div>
-            <Stepper current={step} />
+            {!sent && <Stepper current={step} />}
           </header>
 
           <div className={styles.body}>
-            <h3
-              id="transfer-step-title"
-              ref={stepTitleRef}
-              tabIndex={-1}
-              className={styles.stepTitle}
-            >
-              {STEP_TITLES[step]}
-            </h3>
-            {step === 'recipient' && (
-              <RecipientStep labelledBy="transfer-step-title" />
+            {/* Always rendered, so the success text is announced when added. */}
+            <p aria-live="polite" className="visually-hidden">
+              {sent &&
+                `Transfer sent. ${formatMoney(sent.amount)} to ${sent.recipient.name}.`}
+            </p>
+            {sent ? (
+              <SuccessPanel transfer={sent} />
+            ) : (
+              <>
+                <h3
+                  id="transfer-step-title"
+                  ref={stepTitleRef}
+                  tabIndex={-1}
+                  className={styles.stepTitle}
+                >
+                  {STEP_TITLES[step]}
+                </h3>
+                {step === 'recipient' && (
+                  <RecipientStep labelledBy="transfer-step-title" />
+                )}
+                {step === 'amount' && (
+                  <AmountStep
+                    accounts={accounts}
+                    remainingLimit={remainingLimit}
+                  />
+                )}
+                {step === 'review' && <ReviewStep accounts={accounts} />}
+                {step === 'review' && transfer.error && (
+                  <p role="alert" className={styles.alert}>
+                    {sendErrorMessage(transfer.error)}
+                  </p>
+                )}
+              </>
             )}
-            {step === 'amount' && (
-              <AmountStep accounts={accounts} remainingLimit={remainingLimit} />
-            )}
-            {step === 'review' && <ReviewStep accounts={accounts} />}
           </div>
 
           <footer className={styles.footer}>
-            {previous ? (
-              <Button variant="secondary" onClick={() => setStep(previous)}>
-                Back
+            {sent ? (
+              <Button className={styles.done} onClick={close}>
+                Back to dashboard
               </Button>
             ) : (
-              <Button variant="secondary" onClick={close}>
-                Cancel
-              </Button>
-            )}
-            {step === 'review' ? (
-              // Sending is added with POST /api/transfers.
-              <Button>Confirm transfer</Button>
-            ) : (
-              <Button type="submit">Continue</Button>
+              <>
+                {previous ? (
+                  <Button
+                    variant="secondary"
+                    disabled={isSending}
+                    onClick={() => goBack(previous)}
+                  >
+                    Back
+                  </Button>
+                ) : (
+                  <Button variant="secondary" onClick={close}>
+                    Cancel
+                  </Button>
+                )}
+                {step === 'review' ? (
+                  <Button disabled={isSending} onClick={send}>
+                    {isSending ? 'Sending…' : 'Confirm transfer'}
+                  </Button>
+                ) : (
+                  <Button type="submit">Continue</Button>
+                )}
+              </>
             )}
           </footer>
         </form>

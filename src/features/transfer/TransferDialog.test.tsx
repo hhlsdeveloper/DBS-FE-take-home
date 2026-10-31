@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { formatMoney } from '../../lib/format'
@@ -142,6 +142,20 @@ describe('recipient step', () => {
 
     expect(
       within(dialog).getByRole('heading', { name: 'How much?' }),
+    ).toBeInTheDocument()
+  })
+
+  it('says when there are no saved payees', async () => {
+    server.use(
+      http.get('*/api/payees', () => HttpResponse.json({ payees: [] })),
+    )
+    const { dialog } = await openTransfer()
+
+    expect(
+      await within(dialog).findByText('You have no saved payees yet.'),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('radio', { name: 'Send to someone new' }),
     ).toBeInTheDocument()
   })
 
@@ -340,5 +354,134 @@ describe('review step', () => {
 
     expect(dialog).toHaveTextContent('Alex Lim · OCBC · •••• 5678')
     expect(dialog).not.toHaveTextContent('Note')
+  })
+})
+
+async function openReviewStep() {
+  const app = await openAmountStep()
+  await app.user.type(app.amount, '120')
+  await app.user.click(
+    within(app.dialog).getByRole('button', { name: 'Continue' }),
+  )
+  const confirm = within(app.dialog).getByRole('button', {
+    name: 'Confirm transfer',
+  })
+  return { ...app, confirm }
+}
+
+const serverError = () =>
+  HttpResponse.json(
+    { error: { code: 'INTERNAL_ERROR', message: 'Down' } },
+    { status: 500 },
+  )
+
+function countTransferPosts() {
+  let count = 0
+  server.events.on('request:start', ({ request }) => {
+    if (request.method === 'POST') count += 1
+  })
+  return () => count
+}
+
+describe('sending', () => {
+  it('shows success and the dashboard updates', async () => {
+    const { user, dialog, button, confirm } = await openReviewStep()
+
+    await user.click(confirm)
+
+    expect(
+      within(dialog).getByRole('button', { name: 'Sending…' }),
+    ).toBeDisabled()
+    expect(
+      await within(dialog).findByRole('heading', { name: 'Transfer sent' }),
+    ).toHaveFocus()
+    expect(dialog).toHaveTextContent(money(120))
+    expect(dialog).toHaveTextContent('to Jamie Tan · DBS · •••• 3391')
+    expect(dialog).toHaveTextContent(/Reference\s*TRF-/)
+    expect(dialog).toHaveTextContent('The money should arrive within minutes.')
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Back to dashboard' }),
+    )
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(button).toHaveFocus()
+    const accounts = within(
+      screen.getByRole('list', { name: 'Accounts' }),
+    ).getAllByRole('listitem')
+    expect(within(accounts[0]).getByText(money(4160.55))).toBeInTheDocument()
+    expect(screen.getByText(money(17000.55))).toBeInTheDocument()
+    expect(
+      screen.getByText(`${money(4880)} remaining today`),
+    ).toBeInTheDocument()
+    const transactions = within(
+      screen.getByRole('list', { name: 'Recent transactions' }),
+    ).getAllByRole('listitem')
+    expect(transactions[0]).toHaveTextContent('Transfer to Jamie Tan')
+  })
+
+  it('sends only once when Confirm is pressed twice', async () => {
+    const posts = countTransferPosts()
+    const { dialog, confirm } = await openReviewStep()
+
+    // Both clicks land before React re-renders the button as disabled.
+    fireEvent.click(confirm)
+    fireEvent.click(confirm)
+
+    await within(dialog).findByRole('heading', { name: 'Transfer sent' })
+    expect(posts()).toBe(1)
+  })
+
+  it('keeps the details after a failure and can try again', async () => {
+    server.use(http.post('*/api/transfers', serverError, { once: true }))
+    const { user, dialog, confirm } = await openReviewStep()
+
+    await user.click(confirm)
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      "Something went wrong. Your money hasn't left your account. Try again.",
+    )
+    expect(
+      within(dialog).queryByRole('heading', { name: 'Transfer sent' }),
+    ).not.toBeInTheDocument()
+    expect(dialog).toHaveTextContent('Jamie Tan · DBS · •••• 3391')
+    expect(dialog).toHaveTextContent(`Amount${money(120)}`)
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Confirm transfer' }),
+    )
+
+    expect(
+      await within(dialog).findByRole('heading', { name: 'Transfer sent' }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows the API’s message when it rejects a field', async () => {
+    const message = `Amount can't be more than your available balance (${formatMoney(100)}).`
+    server.use(
+      http.post(
+        '*/api/transfers',
+        () =>
+          HttpResponse.json(
+            {
+              error: {
+                code: 'INSUFFICIENT_FUNDS',
+                message: 'Amount exceeds available balance.',
+                fields: { amount: message },
+              },
+            },
+            { status: 422 },
+          ),
+        { once: true },
+      ),
+    )
+    const { user, dialog, confirm } = await openReviewStep()
+
+    await user.click(confirm)
+
+    // Text content turns the non-breaking space into a plain one.
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      message.replace(formatMoney(100), money(100)),
+    )
   })
 })

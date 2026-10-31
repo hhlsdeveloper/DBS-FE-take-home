@@ -1,0 +1,65 @@
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) 0;
+  text-align: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--positive-soft);
+  color: var(--positive);
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+}
+
+/* Focused by code when the panel opens, not by the user, so no ring. */
+.title:focus {
+  outline: none;
+}
+
+.amount {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.recipient {
+  color: var(--text-muted);
+}
+
+.reference {
+  display: flex;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.reference dt {
+  color: var(--text-muted);
+}
+
+.reference dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+}
+
+.note {
+  margin-top: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
