@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import {
   useAccounts,
   useCustomer,
@@ -12,6 +13,7 @@ import {
   type Theme,
   usePreference,
 } from '../preferences/usePreference'
+import { TransferDialog } from '../transfer/TransferDialog'
 import { AccountCard } from './AccountCard'
 import { BalanceHero } from './BalanceHero'
 import { DailyLimitCard } from './DailyLimitCard'
@@ -33,6 +35,14 @@ export function Dashboard() {
     'segment',
     customer.data?.segment ?? 'retail',
   )
+
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
+  const newTransferButtonRef = useRef<HTMLButtonElement>(null)
+
+  function closeTransferDialog() {
+    setIsTransferDialogOpen(false)
+    newTransferButtonRef.current?.focus()
+  }
 
   // Only a failed *first* load is an error. If a background refresh fails we
   // keep showing the data we already have (isError would also be true then).
@@ -69,7 +79,11 @@ export function Dashboard() {
                 <BalanceHero
                   accounts={accounts.data}
                   action={
-                    <Button className={styles.newTransfer}>
+                    <Button
+                      ref={newTransferButtonRef}
+                      className={styles.newTransfer}
+                      onClick={() => setIsTransferDialogOpen(true)}
+                    >
                       <PlusIcon />
                       New transfer
                     </Button>
@@ -103,6 +117,7 @@ export function Dashboard() {
           <DashboardSkeleton />
         )}
       </main>
+      {isTransferDialogOpen && <TransferDialog onClose={closeTransferDialog} />}
     </>
   )
 }

@@ -1,0 +1,103 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.control {
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+/* The native arrow can't be spaced or coloured, so draw our own. */
+.selectWrap {
+  position: relative;
+}
+
+.select {
+  appearance: none;
+  padding-right: var(--space-10);
+}
+
+.selectWrap::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: translateY(-75%) rotate(45deg);
+  pointer-events: none;
+}
+
+/* Where supported (Chromium 135+), we draw the option list too, so it
+   matches the fields and opens right above the select. Elsewhere the
+   browser's own list (the OS picker on phones) is used. */
+@supports (appearance: base-select) {
+  .select,
+  .select::picker(select) {
+    appearance: base-select;
+  }
+
+  .select {
+    display: flex;
+    align-items: center;
+  }
+
+  .select::picker-icon {
+    display: none;
+  }
+
+  .selectWrap:has(.select:open)::after {
+    transform: translateY(-25%) rotate(-135deg);
+  }
+
+  .select::picker(select) {
+    position-area: block-start span-inline-end;
+    position-try-order: normal;
+    position-try-fallbacks: flip-block;
+    width: anchor-size(width);
+    margin-block: var(--space-2);
+    padding: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .select option {
+    min-height: var(--tap-target);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+  }
+
+  .select option::checkmark {
+    display: none;
+  }
+
+  .select option:hover,
+  .select option:focus-visible {
+    background: var(--surface-muted);
+    outline: none;
+  }
+
+  .select option:checked {
+    background: var(--brand-soft);
+    font-weight: var(--weight-medium);
+  }
+}
+
+.control[aria-invalid='true'] {
+  border-color: var(--negative);
+}
