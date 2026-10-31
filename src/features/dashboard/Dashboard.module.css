@@ -1,0 +1,131 @@
+/* Shared by the loaded dashboard and its skeleton so the layout doesn't jump
+   when data arrives. */
+
+.main {
+  max-width: var(--container);
+  margin: 0 auto;
+  /* Extra bottom space so the fixed New transfer button never covers content. */
+  padding: var(--space-6) var(--gutter-mobile)
+    calc(var(--tap-target) + var(--space-12) + env(safe-area-inset-bottom));
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.greeting {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+
+.mobileOnly {
+  display: block;
+}
+
+/* Mobile: one column; the daily limit sits right under the balance. */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'hero'
+    'limit'
+    'accounts'
+    'transactions';
+  gap: var(--space-6);
+}
+
+.hero {
+  grid-area: hero;
+}
+
+.limit {
+  grid-area: limit;
+}
+
+.accounts {
+  grid-area: accounts;
+}
+
+.transactions {
+  grid-area: transactions;
+}
+
+.accountList {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mobile: pinned to the bottom of the screen, above the safe area. */
+.newTransfer {
+  position: fixed;
+  right: var(--gutter-mobile);
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  left: var(--gutter-mobile);
+  z-index: var(--z-header);
+  box-shadow: var(--shadow-lg);
+}
+
+.sectionTitle {
+  margin-bottom: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 640px) {
+  .main {
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
+  }
+
+  .accountList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Desktop: main column + 300px right rail for the daily limit. */
+@media (min-width: 1024px) {
+  .main {
+    padding-bottom: var(--space-12);
+  }
+
+  .mobileOnly {
+    display: none;
+  }
+
+  /* Desktop: back inside the balance hero, inverted so it stands out on the
+     brand gradient. */
+  .newTransfer,
+  .newTransfer:hover:not(:disabled),
+  .newTransfer:active:not(:disabled) {
+    position: static;
+    background: var(--on-hero);
+    color: var(--hero-from);
+    box-shadow: none;
+  }
+
+  /* The default ring is the brand colour, which disappears on the gradient. */
+  .newTransfer:focus-visible {
+    outline-color: var(--on-hero);
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      'hero limit'
+      'accounts limit'
+      'transactions limit';
+    align-items: start;
+  }
+}

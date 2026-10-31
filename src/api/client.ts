@@ -24,11 +24,29 @@ export class ApiError extends Error {
   }
 }
 
+// Demo hooks (see brief/api-contract.md): opening the app with ?scenario=error,
+// ?scenario=empty or ?delay=1500 forwards them to every GET, so reviewers can
+// see the error, empty and loading states. This is the only place they're read.
+const DEMO_PARAMS = ['scenario', 'delay']
+
+function withDemoParams(url: string): string {
+  const page = new URLSearchParams(window.location.search)
+  const target = new URL(url, window.location.origin)
+  for (const name of DEMO_PARAMS) {
+    const value = page.get(name)
+    if (value !== null) target.searchParams.set(name, value)
+  }
+  return target.toString()
+}
+
 export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const url = `${BASE_URL}${path.replace(/^\//, '')}`
+  let url = `${BASE_URL}${path.replace(/^\//, '')}`
+  const method = init?.method?.toUpperCase() ?? 'GET'
+  if (method === 'GET') url = withDemoParams(url)
+
   const response = await fetch(url, init)
   const body = (await response.json().catch(() => null)) as
     | T
