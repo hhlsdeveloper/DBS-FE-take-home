@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { InlineError } from './InlineError'
 import styles from './fields.module.css'
 
@@ -24,22 +24,51 @@ function Label({ id, label }: FieldProps) {
   )
 }
 
+type TextFieldProps = FieldProps &
+  ComponentProps<'input'> & {
+    /** Shown inside the box before the value, e.g. `SGD`. */
+    unit?: string
+    /** Shown at the end of the label row, e.g. a character counter. */
+    aside?: ReactNode
+    /** Lines reserved for the error, so a long one doesn't move the form. */
+    errorLines?: 1 | 2
+  }
+
 export function TextField({
   id,
   label,
   error,
+  unit,
+  aside,
+  errorLines,
   ...props
-}: FieldProps & ComponentProps<'input'>) {
+}: TextFieldProps) {
+  const input = (
+    <input
+      id={id}
+      className={unit ? `${styles.control} ${styles.withUnit}` : styles.control}
+      {...errorProps(id, error)}
+      {...props}
+    />
+  )
+
   return (
     <div className={styles.field}>
-      <Label id={id} label={label} />
-      <input
-        id={id}
-        className={styles.control}
-        {...errorProps(id, error)}
-        {...props}
-      />
-      <InlineError id={`${id}-error`} message={error} />
+      <div className={styles.labelRow}>
+        <Label id={id} label={label} />
+        {aside}
+      </div>
+      {unit ? (
+        <div className={styles.unitWrap}>
+          <span className={styles.unit} aria-hidden="true">
+            {unit}
+          </span>
+          {input}
+        </div>
+      ) : (
+        input
+      )}
+      <InlineError id={`${id}-error`} message={error} lines={errorLines} />
     </div>
   )
 }

@@ -3,3 +3,7 @@
   color: var(--negative);
   font-size: var(--text-sm);
 }
+
+.twoLines {
+  min-height: calc(2 * var(--text-sm) * var(--leading-normal));
+}
