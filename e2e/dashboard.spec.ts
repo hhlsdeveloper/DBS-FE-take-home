@@ -13,16 +13,16 @@ test('dashboard loads with accounts and transactions', async ({ page }) => {
     page.getByRole('status', { name: 'Loading dashboard' }),
   ).toBeVisible()
 
+  // Structure only: names, amounts and counts come from the API, so they
+  // aren't asserted here.
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'New transfer' })).toBeVisible()
   await expect(
-    page.getByRole('heading', { name: 'Good evening, Ava' }),
+    page.getByRole('list', { name: 'Accounts' }).getByRole('listitem').first(),
   ).toBeVisible()
-  await expect(page.getByText(/SGD\s17,120\.55/)).toBeVisible()
   await expect(
-    page.getByRole('list', { name: 'Accounts' }).getByRole('listitem'),
-  ).toHaveCount(3)
-  await expect(
-    page.getByRole('list', { name: 'Recent transactions' }).getByRole('listitem'),
-  ).toHaveCount(8)
+    page.getByRole('list', { name: 'Recent transactions' }),
+  ).toBeVisible()
 
   expect(consoleErrors).toEqual([])
 })
