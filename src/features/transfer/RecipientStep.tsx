@@ -47,6 +47,10 @@ function PayeeList({ query }: { query: string }) {
     )
   }
 
+  if (payees.data.length === 0) {
+    return <p className={styles.message}>You have no saved payees yet.</p>
+  }
+
   const visible = filterPayees(payees.data, query)
   if (visible.length === 0) {
     return <p className={styles.message}>No payees match your search.</p>
