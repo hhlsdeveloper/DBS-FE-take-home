@@ -1,15 +1,21 @@
-import type { Segment } from '../../api/types'
+import { useRef } from 'react'
 import {
   useAccounts,
   useCustomer,
   useRecentTransactions,
 } from '../../api/queries'
+import type { Segment } from '../../api/types'
+import { Button } from '../../components/Button'
+import { PlusIcon } from '../../components/icons'
 import { SegmentSwitch } from '../preferences/SegmentSwitch'
 import {
   getSystemTheme,
   type Theme,
   usePreference,
 } from '../preferences/usePreference'
+import { AccountCard } from './AccountCard'
+import { BalanceHero } from './BalanceHero'
+import { DailyLimitCard } from './DailyLimitCard'
 import styles from './Dashboard.module.css'
 import { DashboardError } from './DashboardError'
 import { DashboardSkeleton } from './DashboardSkeleton'
@@ -27,6 +33,9 @@ export function Dashboard() {
     'segment',
     customer.data?.segment ?? 'retail',
   )
+
+  // Focus returns here when the transfer dialog closes.
+  const newTransferButtonRef = useRef<HTMLButtonElement>(null)
 
   const failed = [customer, accounts, transactions].filter((q) => q.isError)
 
@@ -49,7 +58,37 @@ export function Dashboard() {
             <SegmentSwitch segment={segment} onChange={setSegment} />
           </div>
         </div>
-        <div className={styles.grid} />
+        <div className={styles.grid}>
+          <div className={styles.hero}>
+            <BalanceHero
+              accounts={accounts.data}
+              action={
+                <Button
+                  ref={newTransferButtonRef}
+                  className={styles.newTransfer}
+                >
+                  <PlusIcon />
+                  New transfer
+                </Button>
+              }
+            />
+          </div>
+          <div className={styles.limit}>
+            <DailyLimitCard customer={customer.data} />
+          </div>
+          <section className={styles.accounts} aria-labelledby="accounts-title">
+            <h2 id="accounts-title" className={styles.sectionTitle}>
+              Accounts
+            </h2>
+            <ul aria-label="Accounts" className={styles.accountList}>
+              {accounts.data.map((account) => (
+                <li key={account.id}>
+                  <AccountCard account={account} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
       </>
     )
   } else {

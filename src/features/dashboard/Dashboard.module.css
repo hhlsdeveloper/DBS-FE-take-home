@@ -4,7 +4,9 @@
 .main {
   max-width: var(--container);
   margin: 0 auto;
-  padding: var(--space-6) var(--gutter-mobile) var(--space-8);
+  /* Extra bottom space so the fixed New transfer button never covers content. */
+  padding: var(--space-6) var(--gutter-mobile)
+    calc(var(--tap-target) + var(--space-12) + env(safe-area-inset-bottom));
 }
 
 .intro {
@@ -53,6 +55,24 @@
   grid-area: transactions;
 }
 
+.accountList {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mobile: pinned to the bottom of the screen, above the safe area. */
+.newTransfer {
+  position: fixed;
+  right: var(--gutter-mobile);
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  left: var(--gutter-mobile);
+  z-index: var(--z-header);
+  box-shadow: var(--shadow-lg);
+}
+
 .sectionTitle {
   margin-bottom: var(--space-3);
   color: var(--text-muted);
@@ -67,12 +87,26 @@
     padding-left: var(--gutter);
     padding-right: var(--gutter);
   }
+
+  .accountList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 /* Desktop: main column + 300px right rail for the daily limit. */
 @media (min-width: 1024px) {
+  .main {
+    padding-bottom: var(--space-12);
+  }
+
   .mobileOnly {
     display: none;
+  }
+
+  /* Desktop: back inside the balance hero. */
+  .newTransfer {
+    position: static;
+    box-shadow: none;
   }
 
   .grid {
