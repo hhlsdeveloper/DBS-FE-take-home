@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Account } from '../../api/types'
+import type { Account, CreateTransferRequest } from '../../api/types'
 import { getDepositAccounts } from '../../lib/accounts'
 import { formatMoney } from '../../lib/format'
 
@@ -107,5 +107,26 @@ export function emptyTransfer(accounts: Account[]): TransferFormValues {
     fromAccountId: getDepositAccounts(accounts)[0]?.id ?? '',
     amount: '',
     note: '',
+  }
+}
+
+/** Turns valid form values into the body for `POST /api/transfers`. */
+export function toTransferRequest(
+  values: TransferFormValues,
+): CreateTransferRequest {
+  const note = values.note.trim()
+  return {
+    fromAccountId: values.fromAccountId,
+    amount: Number(values.amount),
+    ...(note && { note }),
+    ...(values.payeeId === NEW_RECIPIENT
+      ? {
+          recipient: {
+            name: values.newRecipient.name.trim(),
+            accountNumber: values.newRecipient.accountNumber,
+            bank: values.newRecipient.bank,
+          },
+        }
+      : { payeeId: values.payeeId }),
   }
 }
