@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest'
-import { configure } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest'
 import { handlers, resetMockDb } from '../mocks/handlers'
@@ -24,6 +24,8 @@ if (!HTMLDialogElement.prototype.showModal) {
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 beforeEach(() => resetMockDb())
 afterEach(() => {
+  // Vitest globals are off, so Testing Library can't unmount automatically.
+  cleanup()
   server.resetHandlers()
   server.events.removeAllListeners()
 })
