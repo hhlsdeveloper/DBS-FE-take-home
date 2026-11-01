@@ -1,135 +1,135 @@
-# Meridian Banking — Frontend Take-Home
+# Meridian Banking — LIN HANHUI
 
-Build a small banking app for one customer: a **dashboard** that shows her
-accounts and recent transactions, and a **three-step transfer** that sends money
-to a payee.
-
-You get a working React + TypeScript starter with a mock API already wired in,
-plus design tokens and a wireframe. You don't need a backend, and you don't need
-to invent data.
-
-|  |  |
-| --- | --- |
-| **Time** | Submit within **2 weeks** of receiving this. Most people need about **8–12 hours**; you don't need to use the full two weeks. |
-| **AI tools** | Allowed. In the follow-up call you explain your code and change it live, **without AI help**. See [How we assess](#4-how-we-assess). |
-| **Stack** | React 19, TypeScript, Vite, TanStack Query, React Hook Form, Zod, MSW, Vitest (all installed). Node 22. |
-
----
-
-## 1. Get started
-
-1. Open **https://github.com/Harmonice-Mundi/2026-fe-assignment/generate**
-   (or press **Use this template** → **Create a new repository**). Choose your
-   own account as the owner, keep it **Public**, and click **Create
-   repository**.
-2. Clone your copy and run:
-
-   ```bash
-   npm install
-   npm run dev        # http://localhost:5173
-   ```
-
-   You should see **"Mock API: connected"**. That screen is a placeholder;
-   replace it with your app.
-
-3. Read the docs below in order before writing code.
-
-## 2. What to read
-
-| Read | What it gives you |
-| --- | --- |
-| 1. [`brief/candidate-brief.md`](brief/candidate-brief.md) | **The spec.** What to build, what's required vs optional, exact copy. |
-| 2. [`wireframes/wireframe.md`](wireframes/wireframe.md) | Layout of each screen (low fidelity — no visual design). |
-| 3. [`brief/api-contract.md`](brief/api-contract.md) | Endpoints, types, errors, and test hooks. |
-
-Look these up when you need them:
-
-- [`DEPLOYMENT.md`](DEPLOYMENT.md): hosting settings and fixes for common mock-API
-  problems.
-- [`brief/design-tokens.css`](brief/design-tokens.css): colours, spacing and type
-  (already imported).
-- [`mock-api/README.md`](mock-api/README.md): the optional Node mock server.
-
-## 3. What's already in the starter
-
-| Path | What it is |
-| --- | --- |
-| `src/api/client.ts`, `src/api/types.ts` | Typed `apiFetch` helper and the API types. Build your queries on these. |
-| `src/lib/format.ts` | `formatMoney` and `formatShortDate`. Use them so amounts and dates match the brief. |
-| `src/mocks/`, `mock-api/` | The mock API. It runs in the browser, in tests, and in your deployed site. **Don't edit it.** |
-| `src/test/setup.ts` | Test setup. The mock data resets before every test. |
-| `src/App.tsx` | Placeholder screen. Replace it. |
-
-How you structure folders, components and features is **up to you** — that's
-part of what we look at.
-
-```bash
-npm run dev        # start the app
-npm test           # run tests once (npm run test:watch to keep watching)
-npm run lint       # ESLint
-npm run typecheck  # TypeScript
-npm run check      # lint + typecheck + tests
-npm run build      # production build into dist/
-```
-
-Run `npm run check` and `npm run build` before you submit; both should pass.
-
-## 4. How we assess
-
-1. **We open your deployed app** and run through the flows in the brief.
-2. **We read your code and README.** We look at how you structured the
-   project, the decisions you made, and whether the tests check real behaviour.
-3. **We have a follow-up call with you (about 45 minutes).** You share your
-   screen and:
-   - walk us through the structure and two or three decisions you made;
-   - trace one flow through the code (for example, what happens from
-     `Confirm transfer` until the balance updates);
-   - make **one or two small changes live**, without AI assistance. They are
-     the size of "add a validation rule" or "show one more field". Your
-     normal editor, docs and search are fine.
-
-**On AI:** use whatever tools you like while building. We are not checking
-whether code was AI-generated. We are checking that **you understand all of
-it** and made deliberate choices. If you can't explain a piece of code, it
-counts against you, whoever wrote it. Your README must say what you used AI
-for (see below).
-
-A smaller app you understand well scores better than a bigger one you can't
-explain.
-
-## 5. Submit
-
-1. **Deploy** to Netlify, Vercel or Cloudflare Pages (settings in
-   [`DEPLOYMENT.md`](DEPLOYMENT.md)). The deployed site must work with no local
-   server.
-2. **Replace this README** with your own, using the outline below.
-3. **Reply to the invitation email** with your repo URL and your deployed URL.
-
-### Your README
-
-```md
-# Meridian Banking — <Your Name>
-
-- Deployed: <url>
-- Run locally: `npm install && npm run dev`
+- Deployed: https://dbs-fe-take-home.vercel.app
+- Run locally: `npm ci && npm run dev`
 
 ## Project structure
-Folders and what each is responsible for.
+
+```
+src/
+├─ main.tsx         app's main entry point; starts the MSW mock server
+├─ api/             backend API integration: fetch client, types, queries and mutations
+├─ lib/             generic TypeScript helper functions
+├─ components/      generic UI with no banking knowledge: Button, fields, InlineError,
+│                   EmptyState, Skeleton, icons
+├─ features/
+│  ├─ dashboard/    Dashboard (loading/error boundaries) → DashboardContent (the page),
+│  │                Header, BalanceHero, AccountCard, DailyLimitCard, TransactionList
+│  ├─ preferences/  usePreference (theme/segment), ThemeToggle, SegmentSwitch
+│  └─ transfer/     TransferDialog, the three steps, SuccessPanel, transferSchema (Zod)
+└─ test/            unit test setup and helpers
+e2e/                e2e tests using Playwright
+```
 
 ## Decisions and trade-offs
-Server state vs UI state, forms and validation, theming, anything you
-chose deliberately, and what you'd change.
+
+**Server state vs UI state.**
+
+- **Server state:** all data from the API is kept in the TanStack Query cache.
+- **Derived values:** total available and remaining daily limit are calculated
+  from that data when needed, not stored.
+- **UI state:** UI-only data (dialog open, current step, search text) is kept
+  in local `useState`.
+- **No global store:** server data already lives in TanStack Query and the
+  remaining UI state is local, so Redux or Zustand would be overkill.
+
+**Forms and validation.**
+
+- **React Hook Form + Zod:** the transfer form uses React Hook Form, connected
+  to a Zod schema with `zodResolver`, so every rule is defined once and used
+  for both inline errors and `Continue`.
+- **One form for all three steps:** values survive Back and step changes for
+  free.
+
+**Theming.**
+
+- **No flash on load:** a small script in `index.html` sets the theme before
+  the page first paints, so the user never sees it switch from the wrong theme.
+
+**Dashboard loading with Suspense instead of `isLoading` checks.**
+
+- **Why:** rather than checking `isLoading` / `isError` for each query and
+  branching in the page, `Suspense` shows the skeleton and an error boundary
+  shows the error and `Retry`. The page component only renders data that's
+  already loaded, with no `undefined` checks.
+- **Trade-off:** it needed one extra library, `react-error-boundary`, and
+  splitting the dashboard into a shell and a content component.
+
+**Search optimisation.**
+
+- **Now:** search filters the 8 loaded transactions on the client, so there's
+  no request per keystroke and, for simplicity, no debounce.
+- **In a real app:** search should run on the server, with the input debounced
+  so the server isn't hit on every keystroke.
+
+**Handling bad API data.**
+
+- **Safe fallbacks:** an invalid date or non-number amount shows `—`, missing
+  text shows as empty, and a missing balance counts as nothing available, so
+  one bad record can't crash the page or skip the balance check.
+- **In a real app:** I'd validate API responses with Zod as they arrive, so bad
+  data is caught in one place instead of where it's used.
+
+**Libraries added.**
+
+- **`react-error-boundary`:** React only supports error boundaries as class
+  components; this small, standard wrapper lets the dashboard catch loading
+  errors and reset them on `Retry`.
+- **`@playwright/test` (dev only):** runs the e2e tests in a real browser.
 
 ## Loading, empty and error states
-How you handled them, and how to see each one in the deployed app.
+
+| State | How it's handled | See it on the deployed site |
+| --- | --- | --- |
+| Loading | Skeleton with the same layout as the loaded page, so nothing jumps | [`?delay=1500`](https://dbs-fe-take-home.vercel.app/?delay=1500) |
+| Dashboard error | `We couldn't load your dashboard.` + `Retry` (error boundary) | [`?scenario=error`](https://dbs-fe-take-home.vercel.app/?scenario=error) |
+| Empty lists | `No transactions yet.`; payees: `You have no saved payees yet.`, with `Send to someone new` still offered | [`?scenario=empty`](https://dbs-fe-take-home.vercel.app/?scenario=empty) |
+| No search results | `No transactions match your search.` + `Clear search` | search for `zzz` |
+| Field errors | Inline under the field, linked with `aria-describedby`; space reserved so the form doesn't move | e.g. amount `99999` |
+| Send failure | Stays on Review with data intact, error in `role="alert"`, `Confirm transfer` to retry | put `#fail` in the note |
 
 ## Tests
-What they cover and why you picked those cases.
+
+53 unit and integration tests (Vitest + Testing Library + MSW), covering the
+happy and unhappy paths of each flow, including the three the brief requires.
+
+- **UI tests:** check behaviour after user interaction (clicking, typing,
+  keyboard) through roles, labels and visible text, not component internals.
+- **Helper function tests:** cover edge cases such as an empty list, negative
+  amounts, rounding and timezones.
+- **Bad data:** both the helpers and the UI are tested with incomplete or
+  invalid API data (invalid dates, non-number amounts, missing text or
+  balances), so nothing crashes or shows "NaN".
 
 ## AI use
-Which tools, and what for. Name two or three places where you changed,
-rejected or fixed what the AI produced, and why.
+
+I used **Claude Code** throughout:
+
+- **What for:** planning against the brief, writing components and tests,
+  reviewing, and opening PRs.
+- **Guardrails:** a `CLAUDE.md` file holds the house rules it had to follow:
+  tokens only, server data in TanStack Query only, each validation rule once,
+  never edit the mock API.
+- **Process:** every change went through a feature branch, `npm run check` and
+  a PR I reviewed and merged.
+
+Places where I changed, rejected or corrected what it produced:
+
+- **Suspense.** Claude recommended keeping `useQuery` with explicit loading and
+  error branches. I chose Suspense and an error boundary because the component
+  reads more cleanly; we then made sure the three requests still run in
+  parallel with `useSuspenseQueries`.
+- **Where types and helpers live.** I moved the `Theme` type into
+  `src/api/types.ts` next to `Segment` against its suggestion, and simplified
+  code it had written defensively: a redundant `isSuccess` check around
+  `transfer.data`, and a guard around `showModal()`.
 
 ## Not done / known issues
-What you left out or would do with more time.
-```
+
+- **Optional extras not built:** daily-limit progress bar, `Discard this
+  transfer?` confirmation, an in-app debug menu (the URL parameters above cover
+  it), balance hide, a third segment, the `#transfer` deep link.
+- **A full e2e test of the transfer flow.** The Playwright tests cover the
+  dashboard and the dialog's open/close behaviour; the transfer itself (happy
+  and unhappy paths) is covered by unit/integration tests but not end to end
+  in a real browser.
