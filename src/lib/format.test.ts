@@ -15,3 +15,13 @@ describe('formatShortDate', () => {
     expect(formatShortDate('2026-10-18T08:15:00+08:00')).toBe('18 Oct')
   })
 })
+
+describe('formatters with bad data', () => {
+  it('shows a dash for an amount that is not a number', () => {
+    expect(formatMoney(Number.NaN)).toBe('—')
+  })
+
+  it('shows a dash for an invalid date instead of throwing', () => {
+    expect(formatShortDate('not-a-date')).toBe('—')
+  })
+})

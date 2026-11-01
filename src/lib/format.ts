@@ -12,9 +12,12 @@ const money = new Intl.NumberFormat('en-SG', {
   currencyDisplay: 'code',
 })
 
+// Shown in place of a value that isn't usable, instead of "NaN" or a crash.
+const MISSING = '—'
+
 /** `4280.55` → `SGD 4,280.55`, `-420.3` → `-SGD 420.30` */
 export function formatMoney(amount: number): string {
-  return money.format(amount)
+  return Number.isFinite(amount) ? money.format(amount) : MISSING
 }
 
 // Dates are shown in Singapore time so the output doesn't depend on where the
@@ -27,5 +30,7 @@ const shortDate = new Intl.DateTimeFormat('en-SG', {
 
 /** `2026-10-18T08:15:00+08:00` → `18 Oct` */
 export function formatShortDate(iso: string): string {
-  return shortDate.format(new Date(iso))
+  const date = new Date(iso)
+  // Intl throws on an invalid date, which would take down the whole dashboard.
+  return Number.isNaN(date.getTime()) ? MISSING : shortDate.format(date)
 }
