@@ -6,7 +6,7 @@ import { useCreateTransfer } from '../../api/mutations'
 import type { Account, Customer } from '../../api/types'
 import { Button } from '../../components/Button'
 import { CloseIcon } from '../../components/icons'
-import { getRemainingLimit } from '../../lib/accounts'
+import { getDepositAccounts, getRemainingLimit } from '../../lib/accounts'
 import { formatMoney } from '../../lib/format'
 import { AmountStep } from './AmountStep'
 import { RecipientStep } from './RecipientStep'
@@ -16,7 +16,6 @@ import { SuccessPanel } from './SuccessPanel'
 import styles from './TransferDialog.module.css'
 import {
   createTransferSchema,
-  emptyTransfer,
   toTransferRequest,
   type TransferFormValues,
 } from './transferSchema'
@@ -57,14 +56,9 @@ function sendErrorMessage(error: ApiError): string {
 interface TransferDialogProps {
   accounts: Account[]
   customer: Customer
-  /** Called once the dialog has closed (✕, Cancel or Esc). */
   onClose: () => void
 }
 
-/**
- * Mounted only while open, so closing throws away what was entered and the
- * next transfer starts empty.
- */
 export function TransferDialog({
   accounts,
   customer,
@@ -74,21 +68,23 @@ export function TransferDialog({
   const stepTitleRef = useRef<HTMLHeadingElement>(null)
   const [step, setStep] = useState<TransferStep>('recipient')
   const transfer = useCreateTransfer()
-  // Blocks a second send before the re-render that disables the button.
   const sendingRef = useRef(false)
 
   const remainingLimit = getRemainingLimit(customer)
   const form = useForm<TransferFormValues>({
-    // Rebuilt each render, so a refreshed balance or limit applies at once.
     resolver: zodResolver(createTransferSchema({ accounts, remainingLimit })),
-    // Check a field when the user leaves it, then as they fix it.
     mode: 'onTouched',
-    defaultValues: emptyTransfer(accounts),
+    defaultValues: {
+      payeeId: '',
+      newRecipient: { name: '', accountNumber: '', bank: '' },
+      fromAccountId: getDepositAccounts(accounts)[0]?.id ?? '',
+      amount: '',
+      note: '',
+    },
   })
 
   useEffect(() => {
-    const dialog = dialogRef.current
-    if (dialog && !dialog.open) dialog.showModal()
+    dialogRef.current?.showModal()
   }, [])
 
   // Each step starts with focus on its title, so screen readers announce it.
@@ -118,13 +114,12 @@ export function TransferDialog({
   }
 
   function goBack(previous: TransferStep) {
-    // A send error belongs to the review step; going back to fix it clears it.
     transfer.reset()
     setStep(previous)
   }
 
   const previous = PREVIOUS_STEP[step]
-  const sent = transfer.data?.transfer
+  const successfulTransferData = transfer.data?.transfer
   const isSending = transfer.isPending
 
   return (
@@ -160,17 +155,16 @@ export function TransferDialog({
                 <CloseIcon />
               </button>
             </div>
-            {!sent && <Stepper current={step} />}
+            {!successfulTransferData && <Stepper current={step} />}
           </header>
 
           <div className={styles.body}>
-            {/* Always rendered, so the success text is announced when added. */}
-            <p aria-live="polite" className="visually-hidden">
-              {sent &&
-                `Transfer sent. ${formatMoney(sent.amount)} to ${sent.recipient.name}.`}
+            <p aria-live="polite" className="sr-only">
+              {successfulTransferData &&
+                `Transfer sent. ${formatMoney(successfulTransferData.amount)} to ${successfulTransferData.recipient.name}.`}
             </p>
-            {sent ? (
-              <SuccessPanel transfer={sent} />
+            {successfulTransferData ? (
+              <SuccessPanel transfer={successfulTransferData} />
             ) : (
               <>
                 <h3
@@ -201,7 +195,7 @@ export function TransferDialog({
           </div>
 
           <footer className={styles.footer}>
-            {sent ? (
+            {successfulTransferData ? (
               <Button className={styles.done} onClick={close}>
                 Back to dashboard
               </Button>

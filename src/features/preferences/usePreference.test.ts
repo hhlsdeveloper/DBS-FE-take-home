@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { type Theme, usePreference } from './usePreference'
+import type { Theme } from '../../api/types'
+import { usePreference } from './usePreference'
 
 describe('usePreference', () => {
   beforeEach(() => {

@@ -100,16 +100,6 @@ export type TransferFormValues = z.input<
   ReturnType<typeof createTransferSchema>
 >
 
-export function emptyTransfer(accounts: Account[]): TransferFormValues {
-  return {
-    payeeId: '',
-    newRecipient: { name: '', accountNumber: '', bank: '' },
-    fromAccountId: getDepositAccounts(accounts)[0]?.id ?? '',
-    amount: '',
-    note: '',
-  }
-}
-
 /** Turns valid form values into the body for `POST /api/transfers`. */
 export function toTransferRequest(
   values: TransferFormValues,

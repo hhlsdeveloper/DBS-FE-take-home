@@ -1,4 +1,5 @@
 export type Segment = 'retail' | 'premium'
+export type Theme = 'light' | 'dark'
 export type AccountType = 'checking' | 'savings' | 'credit'
 export type TransactionDirection = 'in' | 'out'
 export type TransactionStatus = 'posted' | 'pending'

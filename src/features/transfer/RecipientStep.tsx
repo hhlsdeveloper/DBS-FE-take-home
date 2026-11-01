@@ -92,7 +92,7 @@ export function RecipientStep({ labelledBy }: { labelledBy: string }) {
   return (
     <>
       {/* Not a form field, so no error line under it. */}
-      <label htmlFor="payee-search" className="visually-hidden">
+      <label htmlFor="payee-search" className="sr-only">
         Search payees
       </label>
       <input

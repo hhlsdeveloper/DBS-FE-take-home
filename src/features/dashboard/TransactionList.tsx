@@ -94,7 +94,7 @@ export function TransactionList({
           <span className={styles.searchIcon}>
             <SearchIcon />
           </span>
-          <label htmlFor="transaction-search" className="visually-hidden">
+          <label htmlFor="transaction-search" className="sr-only">
             Search transactions
           </label>
           <input

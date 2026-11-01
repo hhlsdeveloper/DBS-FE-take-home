@@ -1,7 +1,6 @@
-import type { Segment } from '../../api/types'
+import type { Segment, Theme } from '../../api/types'
 import { SegmentSwitch } from '../preferences/SegmentSwitch'
 import { ThemeToggle } from '../preferences/ThemeToggle'
-import type { Theme } from '../preferences/usePreference'
 import styles from './Header.module.css'
 
 // Only Overview exists; the rest are shown but out of scope (brief §2).

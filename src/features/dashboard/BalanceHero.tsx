@@ -6,7 +6,6 @@ import styles from './BalanceHero.module.css'
 
 interface BalanceHeroProps {
   accounts: Account[]
-  /** The New transfer button. */
   action: ReactNode
 }
 
