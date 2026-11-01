@@ -159,7 +159,7 @@ export function TransferDialog({
           </header>
 
           <div className={styles.body}>
-            <p aria-live="polite" className="visually-hidden">
+            <p aria-live="polite" className="sr-only">
               {successfulTransferData &&
                 `Transfer sent. ${formatMoney(successfulTransferData.amount)} to ${successfulTransferData.recipient.name}.`}
             </p>
