@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
+import type { Theme } from '../../api/types'
 
-export type Theme = 'light' | 'dark'
 type PreferenceName = 'theme' | 'segment'
 
 // Same keys as the pre-paint script in index.html.

@@ -1,6 +1,6 @@
+import type { Theme } from '../../api/types'
 import { MoonIcon, SunIcon } from '../../components/icons'
 import styles from './ThemeToggle.module.css'
-import type { Theme } from './usePreference'
 
 interface ThemeToggleProps {
   theme: Theme

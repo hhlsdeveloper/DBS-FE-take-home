@@ -4,15 +4,11 @@ import {
   useCustomer,
   useRecentTransactions,
 } from '../../api/queries'
-import type { Segment } from '../../api/types'
+import type { Segment, Theme } from '../../api/types'
 import { Button } from '../../components/Button'
 import { PlusIcon } from '../../components/icons'
 import { SegmentSwitch } from '../preferences/SegmentSwitch'
-import {
-  getSystemTheme,
-  type Theme,
-  usePreference,
-} from '../preferences/usePreference'
+import { getSystemTheme, usePreference } from '../preferences/usePreference'
 import { TransferDialog } from '../transfer/TransferDialog'
 import { AccountCard } from './AccountCard'
 import { BalanceHero } from './BalanceHero'
