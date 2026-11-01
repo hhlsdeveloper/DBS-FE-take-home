@@ -74,7 +74,9 @@ describe('background refresh', () => {
         return serverError()
       }),
     )
-    // Returning to the tab refetches stale queries.
+    // Suspense queries count as fresh for at least 1s; wait until they're
+    // stale. Then returning to the tab refetches them.
+    await new Promise((resolve) => setTimeout(resolve, 1100))
     act(() => {
       focusManager.setFocused(false)
       focusManager.setFocused(true)

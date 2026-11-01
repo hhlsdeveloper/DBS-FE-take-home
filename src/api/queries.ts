@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery } from '@tanstack/react-query'
 import { apiFetch, type ApiError } from './client'
 import type {
   AccountsResponse,
@@ -18,35 +18,42 @@ export const queryKeys = {
   payees: ['payees'],
 } as const
 
+// Shared by useQuery and useSuspenseQueries, which take options, not hooks.
+export const customerQuery = queryOptions<
+  CustomerResponse,
+  ApiError,
+  CustomerResponse['customer']
+>({
+  queryKey: queryKeys.customer,
+  queryFn: ({ signal }) => apiFetch('/api/customer', { signal }),
+  select: (data) => data.customer,
+})
+
+export const accountsQuery = queryOptions<
+  AccountsResponse,
+  ApiError,
+  AccountsResponse['accounts']
+>({
+  queryKey: queryKeys.accounts,
+  queryFn: ({ signal }) => apiFetch('/api/accounts', { signal }),
+  select: (data) => data.accounts,
+})
+
+export const recentTransactionsQuery = queryOptions<
+  TransactionsResponse,
+  ApiError,
+  TransactionsResponse['transactions']
+>({
+  queryKey: [...queryKeys.transactions, { limit: RECENT_TRANSACTIONS_LIMIT }],
+  queryFn: ({ signal }) =>
+    apiFetch(`/api/transactions?limit=${RECENT_TRANSACTIONS_LIMIT}`, {
+      signal,
+    }),
+  select: (data) => data.transactions,
+})
+
 export function useCustomer() {
-  return useQuery<CustomerResponse, ApiError, CustomerResponse['customer']>({
-    queryKey: queryKeys.customer,
-    queryFn: ({ signal }) => apiFetch('/api/customer', { signal }),
-    select: (data) => data.customer,
-  })
-}
-
-export function useAccounts() {
-  return useQuery<AccountsResponse, ApiError, AccountsResponse['accounts']>({
-    queryKey: queryKeys.accounts,
-    queryFn: ({ signal }) => apiFetch('/api/accounts', { signal }),
-    select: (data) => data.accounts,
-  })
-}
-
-export function useRecentTransactions() {
-  return useQuery<
-    TransactionsResponse,
-    ApiError,
-    TransactionsResponse['transactions']
-  >({
-    queryKey: [...queryKeys.transactions, { limit: RECENT_TRANSACTIONS_LIMIT }],
-    queryFn: ({ signal }) =>
-      apiFetch(`/api/transactions?limit=${RECENT_TRANSACTIONS_LIMIT}`, {
-        signal,
-      }),
-    select: (data) => data.transactions,
-  })
+  return useQuery(customerQuery)
 }
 
 export function usePayees() {
