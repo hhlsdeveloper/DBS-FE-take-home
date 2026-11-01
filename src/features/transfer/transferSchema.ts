@@ -80,11 +80,14 @@ export function createTransferSchema({
       )
       if (!from || Number.isNaN(amount)) return
 
-      if (amount > from.balance) {
+      // A missing or non-number balance counts as nothing available;
+      // comparing against it would always be false and skip this check.
+      const available = Number.isFinite(from.balance) ? from.balance : 0
+      if (amount > available) {
         ctx.addIssue({
           code: 'custom',
           path: ['amount'],
-          message: `Amount can't be more than your available balance (${formatMoney(from.balance)}).`,
+          message: `Amount can't be more than your available balance (${formatMoney(available)}).`,
         })
       } else if (amount > remainingLimit) {
         ctx.addIssue({

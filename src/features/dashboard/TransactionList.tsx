@@ -16,14 +16,15 @@ function filterTransactions(
 ): Transaction[] {
   const q = query.trim().toLowerCase()
   if (!q) return transactions
+  // Missing text counts as empty, so one bad row can't crash the list.
   return transactions.filter(
     (t) =>
-      t.description.toLowerCase().includes(q) ||
-      t.category.toLowerCase().includes(q),
+      (t.description ?? '').toLowerCase().includes(q) ||
+      (t.category ?? '').toLowerCase().includes(q),
   )
 }
 
-const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+const capitalise = (s = '') => s.charAt(0).toUpperCase() + s.slice(1)
 
 function TransactionRow({ transaction: t }: { transaction: Transaction }) {
   const isIn = t.direction === 'in'

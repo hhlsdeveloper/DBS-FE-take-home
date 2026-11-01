@@ -13,8 +13,11 @@ import { BANKS, NEW_RECIPIENT, type TransferFormValues } from './transferSchema'
 function filterPayees(payees: Payee[], query: string): Payee[] {
   const q = query.trim().toLowerCase()
   if (!q) return payees
+  // Missing text counts as empty, so one bad payee can't crash the search.
   return payees.filter(
-    (p) => p.name.toLowerCase().includes(q) || p.bank.toLowerCase().includes(q),
+    (p) =>
+      (p.name ?? '').toLowerCase().includes(q) ||
+      (p.bank ?? '').toLowerCase().includes(q),
   )
 }
 

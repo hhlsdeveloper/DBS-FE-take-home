@@ -186,6 +186,43 @@ describe('recipient step', () => {
       await within(dialog).findByRole('radio', { name: /Jamie Tan/ }),
     ).toBeInTheDocument()
   })
+
+  it('still searches payees when one has no name or bank', async () => {
+    server.use(
+      http.get('*/api/payees', () =>
+        HttpResponse.json({
+          payees: [
+            {
+              id: 'pay_001',
+              name: 'Jamie Tan',
+              bank: 'DBS',
+              accountNumberMasked: '•••• 3391',
+              initials: 'JT',
+              lastUsedAt: '2026-10-19T09:10:00+08:00',
+            },
+            // No name or bank.
+            {
+              id: 'pay_bad',
+              accountNumberMasked: '•••• 0000',
+              initials: '??',
+              lastUsedAt: '2026-10-18T09:10:00+08:00',
+            },
+          ],
+        }),
+      ),
+    )
+    const { user, dialog } = await openTransfer()
+    await within(dialog).findByRole('radio', { name: /Jamie Tan/ })
+
+    await user.type(
+      within(dialog).getByRole('searchbox', { name: 'Search payees' }),
+      'jamie',
+    )
+
+    expect(
+      within(dialog).getByRole('radio', { name: /Jamie Tan/ }),
+    ).toBeInTheDocument()
+  })
 })
 
 async function openAmountStep() {
@@ -222,6 +259,33 @@ describe('amount step', () => {
       within(dialog).getByRole('heading', { name: 'How much?' }),
     ).toBeInTheDocument()
     expect(requests).toEqual([])
+  })
+
+  it('blocks every amount when the account balance is unusable', async () => {
+    server.use(
+      http.get('*/api/accounts', () =>
+        HttpResponse.json({
+          accounts: [
+            // No balance.
+            {
+              id: 'acc_checking',
+              name: 'Everyday Checking',
+              type: 'checking',
+              maskedNumber: '•••• 4821',
+              currency: 'SGD',
+            },
+          ],
+        }),
+      ),
+    )
+    const { user, amount } = await openAmountStep()
+
+    await user.type(amount, '10')
+    await user.tab()
+
+    expect(amount).toHaveAccessibleDescription(
+      `Amount can't be more than your available balance (${formatMoney(0)}).`,
+    )
   })
 
   it('checks the daily limit against a larger account', async () => {

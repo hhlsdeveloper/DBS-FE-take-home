@@ -207,6 +207,47 @@ describe('recent transactions', () => {
 
     expect(await screen.findByText('No transactions yet.')).toBeInTheDocument()
   })
+
+  it('still shows and searches the list when a transaction has no text', async () => {
+    server.use(
+      http.get('*/api/transactions', () =>
+        HttpResponse.json({
+          transactions: [
+            {
+              id: 'txn_ok',
+              accountId: 'acc_checking',
+              date: '2026-10-19T18:42:00+08:00',
+              description: 'FairPrice Finest',
+              category: 'groceries',
+              direction: 'out',
+              amount: 86.4,
+              status: 'posted',
+            },
+            // No description or category.
+            {
+              id: 'txn_bad',
+              accountId: 'acc_checking',
+              date: '2026-10-18T10:00:00+08:00',
+              direction: 'out',
+              amount: 5,
+              status: 'posted',
+            },
+          ],
+          total: 2,
+        }),
+      ),
+    )
+    const { user } = renderApp()
+
+    expect(await screen.findByText('FairPrice Finest')).toBeInTheDocument()
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search transactions' }), 'fair')
+
+    expect(screen.getByText('1 result')).toBeInTheDocument()
+    expect(
+      screen.queryByText("We couldn't load your dashboard."),
+    ).not.toBeInTheDocument()
+  })
 })
 
 describe('theme and segment', () => {
