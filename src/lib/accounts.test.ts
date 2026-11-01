@@ -43,3 +43,28 @@ describe('account helpers', () => {
     ).toBe(4880)
   })
 })
+
+describe('account helpers with bad data', () => {
+  it('leaves accounts without a usable balance out of the total', () => {
+    const missing = undefined as unknown as number
+    expect(
+      getTotalAvailable([
+        ...accounts,
+        account('acc_bad', 'savings', Number.NaN),
+        account('acc_missing', 'checking', missing),
+      ]),
+    ).toBe(17120.55)
+  })
+
+  it('never shows a negative remaining limit', () => {
+    expect(
+      getRemainingLimit({ dailyTransferLimit: 5000, transferredToday: 5200 }),
+    ).toBe(0)
+  })
+
+  it('treats a limit that is not a number as nothing remaining', () => {
+    expect(
+      getRemainingLimit({ dailyTransferLimit: Number.NaN, transferredToday: 0 }),
+    ).toBe(0)
+  })
+})

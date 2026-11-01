@@ -13,14 +13,23 @@ export function getDepositAccounts(accounts: Account[]): Account[] {
   return accounts.filter(isDepositAccount)
 }
 
+// A missing or non-number balance is skipped so one bad account can't turn
+// the whole total into NaN.
 export function getTotalAvailable(accounts: Account[]): number {
   return roundCents(
-    getDepositAccounts(accounts).reduce((sum, a) => sum + a.balance, 0),
+    getDepositAccounts(accounts)
+      .filter((a) => Number.isFinite(a.balance))
+      .reduce((sum, a) => sum + a.balance, 0),
   )
 }
 
+// Never below zero: going over the limit means nothing is left, not a
+// negative amount.
 export function getRemainingLimit(
   customer: Pick<Customer, 'dailyTransferLimit' | 'transferredToday'>,
 ): number {
-  return roundCents(customer.dailyTransferLimit - customer.transferredToday)
+  const remaining = roundCents(
+    customer.dailyTransferLimit - customer.transferredToday,
+  )
+  return Number.isFinite(remaining) ? Math.max(0, remaining) : 0
 }
