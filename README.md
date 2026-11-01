@@ -62,6 +62,14 @@ e2e/                e2e tests using Playwright
 - **In a real app:** search should run on the server, with the input debounced
   so the server isn't hit on every keystroke.
 
+**Handling bad API data.**
+
+- **Safe fallbacks:** an invalid date or non-number amount shows `—`, missing
+  text shows as empty, and a missing balance counts as nothing available, so
+  one bad record can't crash the page or skip the balance check.
+- **In a real app:** I'd validate API responses with Zod as they arrive, so bad
+  data is caught in one place instead of where it's used.
+
 ## Loading, empty and error states
 
 | State | How it's handled | See it on the deployed site |
@@ -72,35 +80,19 @@ e2e/                e2e tests using Playwright
 | No search results | `No transactions match your search.` + `Clear search` | search for `zzz` |
 | Field errors | Inline under the field, linked with `aria-describedby`; space reserved so the form doesn't move | e.g. amount `99999` |
 | Send failure | Stays on Review with data intact, error in `role="alert"`, `Confirm transfer` to retry | put `#fail` in the note |
+
 ## Tests
 
-45 unit and integration tests (Vitest + Testing Library + MSW), written against
-what the user sees: roles, labels and visible text, not component internals.
-Edge cases override a mock response inside the test with `server.use(...)`.
+53 unit and integration tests (Vitest + Testing Library + MSW), covering the
+happy and unhappy paths of each flow, including the three the brief requires.
 
-- **The three the brief requires:** an amount over the balance shows the error and
-  sends no request; a successful transfer shows the success screen and the
-  dashboard updates; a failed dashboard request shows the error and `Retry`
-  loads it.
-- **Dashboard:** loading state, totals excluding the credit card, the 8 newest
-  transactions, search (case and spaces), no-results and empty states, keeping
-  data when a background refresh fails, theme and segment persistence.
-- **Transfer:** focus on open and return on close, starting empty after Cancel,
-  payee search and keyboard selection, every validation rule, deposit-only
-  accounts, quick amounts, the note counter, Back keeping values, masking a new
-  account number, sending only once on a double click, failure then retry, and
-  showing the API's message when it rejects a field.
-- **Pure logic:** totals and remaining limit (`lib/accounts`), demo-param
-  forwarding (`api/client`), formatting.
-
-I picked these because they're the places a banking UI can go wrong silently:
-wrong money totals, a second send, success shown after a failure, or errors a
-screen-reader user can't hear.
-
-**E2E (Playwright, `npm run test:e2e`, not in CI):** the dashboard loads with no
-console errors, the dialog closes with `Esc` and returns focus, and it's a
-full-screen sheet at 390 px. Set `E2E_BASE_URL` to run against the deployed
-site; without it, it builds and previews locally.
+- **UI tests:** check behaviour after user interaction (clicking, typing,
+  keyboard) through roles, labels and visible text, not component internals.
+- **Helper function tests:** cover edge cases such as an empty list, negative
+  amounts, rounding and timezones.
+- **Bad data:** both the helpers and the UI are tested with incomplete or
+  invalid API data (invalid dates, non-number amounts, missing text or
+  balances), so nothing crashes or shows "NaN".
 
 ## AI use
 
