@@ -70,6 +70,13 @@ e2e/                e2e tests using Playwright
 - **In a real app:** I'd validate API responses with Zod as they arrive, so bad
   data is caught in one place instead of where it's used.
 
+**Libraries added.**
+
+- **`react-error-boundary`:** React only supports error boundaries as class
+  components; this small, standard wrapper lets the dashboard catch loading
+  errors and reset them on `Retry`.
+- **`@playwright/test` (dev only):** runs the e2e tests in a real browser.
+
 ## Loading, empty and error states
 
 | State | How it's handled | See it on the deployed site |
